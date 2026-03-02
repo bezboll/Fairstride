@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairStride – Projektplan</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --grid: #111;
+    --red: #e03030;
+    --red-glow: rgba(224, 48, 48, 0.45);
+    --green: #22c55e;
+    --green-glow: rgba(34, 197, 94, 0.5);
+    --text: #e8e8e8;
+    --text-dim: #444;
+    --text-mid: #666;
+    --phase-label: #ff5555;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 48px 48px 32px;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* ── Fullscreen overlay ───────────────────────────── */
+  #fs-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,8,8,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 9999;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.4s;
+  }
+
+  #fs-overlay .fs-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.18em;
+    color: #555;
+    text-transform: uppercase;
+  }
+
+  #fs-overlay .fs-logo {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 36px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.06em;
+  }
+
+  #fs-overlay .fs-logo span {
+    color: var(--red);
+  }
+
+  #fs-overlay .fs-btn {
+    margin-top: 12px;
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 10px 28px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    color: var(--text-mid);
+    text-transform: uppercase;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+  }
+
+  #fs-overlay:hover .fs-btn {
+    border-color: var(--red);
+    color: #fff;
+    box-shadow: 0 0 16px var(--red-glow);
+  }
+
+  #fs-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* ── Header ───────────────────────────────────────── */
+  header {
+    margin-bottom: 36px;
+    border-left: 3px solid var(--red);
+    padding-left: 20px;
+  }
+
+  header h1 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #fff;
+  }
+
+  header p {
+    font-size: 12px;
+    color: var(--text-mid);
+    margin-top: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Legend ───────────────────────────────────────── */
+  .legend {
+    display: flex;
+    gap: 28px;
+    margin-bottom: 28px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-mid);
+    letter-spacing: 0.04em;
+  }
+
+  .legend-bar {
+    width: 26px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--red);
+  }
+
+  .legend-diamond {
+    width: 10px;
+    height: 10px;
+    background: var(--green);
+    transform: rotate(45deg);
+    flex-shrink: 0;
+  }
+
+  /* ── Chart layout ─────────────────────────────────── */
+  .chart-wrapper { display: flex; flex-direction: column; }
+
+  .chart-header {
+    display: flex;
+    height: 40px;
+    align-items: flex-end;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #1a1a1a;
+    margin-bottom: 2px;
+  }
+
+  .col-label { width: 230px; flex-shrink: 0; padding-right: 16px; }
+
+  .col-label span {
+    font-size: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: #333;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  .month-area {
+    flex: 1;
+    position: relative;
+    height: 100%;
+  }
+
+  .month-tick {
+    position: absolute;
+    bottom: 0;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+
+  .month-tick span {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: #444;
+    letter-spacing: 0.06em;
+  }
+
+  .month-tick div {
+    width: 1px;
+    height: 5px;
+    background: #222;
+  }
+
+  /* ── Rows ─────────────────────────────────────────── */
+  .chart-row {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    position: relative;
+  }
+
+  .phase-row {
+    height: 42px;
+    margin-top: 10px;
+  }
+
+  .phase-row:first-child { margin-top: 0; }
+
+  .row-label {
+    width: 230px;
+    flex-shrink: 0;
+    padding-right: 16px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .task-name {
+    font-size: 12px;
+    color: #bbb;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .phase-name {
+    font-size: 10.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--phase-label);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .row-chart {
+    flex: 1;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* alternating row bg */
+  .row-alt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    left: -230px;
+    right: -48px;
+    background: rgba(255,255,255,0.015);
+    pointer-events: none;
+  }
+
+  /* ── Bars ─────────────────────────────────────────── */
+  .task-bar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 14px;
+    border-radius: 2px;
+    background: var(--red);
+    cursor: default;
+    transition: box-shadow 0.25s, filter 0.25s;
+  }
+
+  .task-bar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 55%);
+    border-radius: 2px;
+  }
+
+  .task-bar:hover {
+    box-shadow: 0 0 18px var(--red-glow), 0 0 6px rgba(224,48,48,0.7);
+    filter: brightness(1.15);
+    z-index: 20;
+  }
+
+  .bar-dur {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    color: rgba(255,255,255,0.45);
+    pointer-events: none;
+  }
+
+  /* ── Milestones ───────────────────────────────────── */
+  .milestone {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%) rotate(45deg);
+    width: 10px;
+    height: 10px;
+    background: var(--green);
+    cursor: default;
+    transition: box-shadow 0.25s, filter 0.25s;
+    z-index: 10;
+  }
+
+  .milestone:hover {
+    box-shadow: 0 0 16px var(--green-glow), 0 0 5px rgba(34,197,94,0.9);
+    filter: brightness(1.2);
+    z-index: 20;
+  }
+
+  .ms-vline {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: repeating-linear-gradient(to bottom, rgba(34,197,94,0.12) 0, rgba(34,197,94,0.12) 4px, transparent 4px, transparent 8px);
+    pointer-events: none;
+  }
+
+  /* ── Tooltip ──────────────────────────────────────── */
+  #tooltip {
+    position: fixed;
+    background: #141414;
+    border: 1px solid #282828;
+    border-radius: 4px;
+    padding: 9px 14px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 1000;
+    line-height: 1.7;
+    white-space: nowrap;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+  }
+
+  /* ── Stats ────────────────────────────────────────── */
+  .stats {
+    margin-top: 36px;
+    display: flex;
+    gap: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #141414;
+  }
+
+  .stat-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--red);
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .row-anim { animation: fadeUp 0.35s ease both; }
+</style>
+</head>
+<body>
+
+<!-- Fullscreen overlay -->
+<div id="fs-overlay">
+  <div class="fs-title">FairStride · Projektplan</div>
+  <div class="fs-logo">FAIR<span>STRIDE</span></div>
+  <div class="fs-btn">Klicken zum Starten</div>
+</div>
+
+<div id="tooltip"></div>
+
+<header>
+  <h1>FAIRSTRIDE</h1>
+  <p>PROJEKTPLAN &nbsp;//&nbsp; 02.03.2026 → 06.08.2026 &nbsp;//&nbsp; 113 ARBEITSTAGE</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-bar"></div>Kritischer Pfad</div>
+  <div class="legend-item"><div class="legend-diamond"></div>Meilenstein</div>
+</div>
+
+<div class="chart-wrapper" id="gantt-root"></div>
+
+<div class="stats">
+  <div><div class="stat-value">113</div><div class="stat-label">Arbeitstage</div></div>
+  <div><div class="stat-value">7</div><div class="stat-label">Phasen</div></div>
+  <div><div class="stat-value">100%</div><div class="stat-label">Kritischer Pfad</div></div>
+  <div><div class="stat-value">06.08.26</div><div class="stat-label">Fertigstellung</div></div>
+</div>
+
+<script>
+// ── Fullscreen ───────────────────────────────────────
+const overlay = document.getElementById('fs-overlay');
+overlay.addEventListener('click', () => {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (req) req.call(el).catch(() => {});
+  overlay.classList.add('hidden');
+  setTimeout(() => overlay.style.display = 'none', 400);
+});
+
+// ── Data ─────────────────────────────────────────────
+const START = new Date('2026-03-02');
+const END   = new Date('2026-08-06');
+const TOTAL = END - START;
+
+function pct(d)    { return ((new Date(d) - START) / TOTAL) * 100; }
+function span(s,e) { return ((new Date(e) - new Date(s)) / TOTAL) * 100; }
+function fmt(d)    { return new Date(d).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}); }
+
+const phases = [
+  { label:'Phase 1 · Konzept', tasks:[
+    { label:'Ausarbeitung gestartet',           type:'ms',   date:'2026-03-02' },
+    { label:'Project Plannung',                  type:'bar',  start:'2026-03-03', end:'2026-03-16', days:10 },
+    { label:'Team bauen',                        type:'bar',  start:'2026-03-17', end:'2026-03-23', days:5  },
+    { label:'Konzept beendet',                   type:'ms',   date:'2026-03-23' },
+  ]},
+  { label:'Phase 2 · Konstruktion', tasks:[
+    { label:'Reschärsche',                       type:'bar',  start:'2026-03-24', end:'2026-04-20', days:20 },
+    { label:'CAD Konstruktion',                  type:'bar',  start:'2026-04-21', end:'2026-06-29', days:50 },
+    { label:'Konstruktion beendet',              type:'ms',   date:'2026-06-29' },
+  ]},
+  { label:'Phase 3 · Material', tasks:[
+    { label:'Samples kaufen',                    type:'bar',  start:'2026-06-30', end:'2026-07-02', days:3  },
+    { label:'Material geliefert',                type:'ms',   date:'2026-07-02' },
+  ]},
+  { label:'Phase 4 · Prototyp', tasks:[
+    { label:'Verschiedene Designs probieren',    type:'bar',  start:'2026-07-03', end:'2026-08-06', days:25 },
+    { label:'Prototyp gebaut',                   type:'ms',   date:'2026-08-06' },
+  ]},
+  { label:'Phase 5 · Tests', tasks:[
+    { label:'Überprüfung startet',               type:'ms',   date:'2026-08-06' },
+    { label:'Tests durchgeführt',                type:'ms',   date:'2026-08-06' },
+  ]},
+  { label:'Phase 6 · Sicherheit', tasks:[
+    { label:'Sicherheitsprüfung abgeschlossen',  type:'ms',   date:'2026-08-06' },
+  ]},
+  { label:'Phase 7 · Herstellung', tasks:[
+    { label:'Herstellung startet',               type:'ms',   date:'2026-08-06' },
+  ]},
+];
+
+const months = [
+  { label:"MÄR '26", date:'2026-03-02' },
+  { label:"APR '26", date:'2026-04-01' },
+  { label:"MAI '26", date:'2026-05-01' },
+  { label:"JUN '26", date:'2026-06-01' },
+  { label:"JUL '26", date:'2026-07-01' },
+  { label:"AUG '26", date:'2026-08-01' },
+];
+
+// ── Build ────────────────────────────────────────────
+const root    = document.getElementById('gantt-root');
+const tooltip = document.getElementById('tooltip');
+
+// Header
+const hdr = document.createElement('div');
+hdr.className = 'chart-header';
+
+const lSpacer = document.createElement('div');
+lSpacer.className = 'col-label';
+lSpacer.innerHTML = '<span>Aufgabe</span>';
+
+const mArea = document.createElement('div');
+mArea.className = 'month-area';
+months.forEach(m => {
+  const t = document.createElement('div');
+  t.className = 'month-tick';
+  t.style.left = pct(m.date) + '%';
+  t.innerHTML = `<span>${m.label}</span><div></div>`;
+  mArea.appendChild(t);
+});
+
+hdr.appendChild(lSpacer);
+hdr.appendChild(mArea);
+root.appendChild(hdr);
+
+let delay = 0;
+let altRow = false;
+
+function makeGridLines(parent) {
+  months.forEach(m => {
+    const gl = document.createElement('div');
+    gl.style.cssText = `position:absolute;top:0;bottom:0;left:${pct(m.date)}%;width:1px;background:#111;pointer-events:none;`;
+    parent.appendChild(gl);
+  });
+}
+
+phases.forEach((ph, pi) => {
+  // Phase header
+  const pRow = document.createElement('div');
+  pRow.className = `chart-row phase-row row-anim`;
+  pRow.style.animationDelay = (delay++ * 55) + 'ms';
+
+  const pLbl = document.createElement('div');
+  pLbl.className = 'row-label';
+  pLbl.innerHTML = `<span class="phase-name">${ph.label.toUpperCase()}</span>`;
+
+  const pChart = document.createElement('div');
+  pChart.className = 'row-chart';
+  makeGridLines(pChart);
+
+  pRow.appendChild(pLbl);
+  pRow.appendChild(pChart);
+  root.appendChild(pRow);
+
+  // Tasks
+  ph.tasks.forEach(task => {
+    altRow = !altRow;
+    const row = document.createElement('div');
+    row.className = `chart-row row-anim${altRow ? ' row-alt' : ''}`;
+    row.style.animationDelay = (delay++ * 55) + 'ms';
+
+    const lbl = document.createElement('div');
+    lbl.className = 'row-label';
+    lbl.innerHTML = `<span class="task-name" style="color:${task.type==='ms'?'#22c55e':'#bbb'}">${task.label}</span>`;
+
+    const chart = document.createElement('div');
+    chart.className = 'row-chart';
+    makeGridLines(chart);
+
+    if (task.type === 'bar') {
+      const bar = document.createElement('div');
+      bar.className = 'task-bar';
+      bar.style.left  = pct(task.start) + '%';
+      bar.style.width = span(task.start, task.end) + '%';
+      if (span(task.start, task.end) > 4) {
+        bar.innerHTML = `<span class="bar-dur">${task.days}d</span><div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0.1) 0%,transparent 55%);border-radius:2px;pointer-events:none;"></div>`;
+      }
+      bar.addEventListener('mouseenter', e => showTip(e, `<span style="color:#ff5555">${task.label}</span><br><span style="color:#444">Start:</span> ${fmt(task.start)}<br><span style="color:#444">Ende: </span> ${fmt(task.end)}<br><span style="color:#444">Dauer:</span> ${task.days} Arbeitstage`));
+      bar.addEventListener('mousemove', positionTip);
+      bar.addEventListener('mouseleave', hideTip);
+      chart.appendChild(bar);
+
+    } else {
+      // vertical dashed line
+      const vl = document.createElement('div');
+      vl.className = 'ms-vline';
+      vl.style.left = pct(task.date) + '%';
+      chart.appendChild(vl);
+
+      const ms = document.createElement('div');
+      ms.className = 'milestone';
+      ms.style.left = pct(task.date) + '%';
+      ms.addEventListener('mouseenter', e => showTip(e, `<span style="color:#22c55e">◆ ${task.label}</span><br><span style="color:#444">Datum:</span> ${fmt(task.date)}`));
+      ms.addEventListener('mousemove', positionTip);
+      ms.addEventListener('mouseleave', hideTip);
+      chart.appendChild(ms);
+    }
+
+    row.appendChild(lbl);
+    row.appendChild(chart);
+    root.appendChild(row);
+  });
+});
+
+// ── Tooltip helpers ───────────────────────────────────
+function showTip(e, html) {
+  tooltip.innerHTML = html;
+  tooltip.style.opacity = '1';
+  positionTip(e);
+}
+function positionTip(e) {
+  const x = Math.min(e.clientX + 14, window.innerWidth - 240);
+  const y = Math.max(e.clientY - 12, 8);
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+function hideTip() { tooltip.style.opacity = '0'; }
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairStride – Netzplan</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --red: #e03030;
+    --red-glow: rgba(224,48,48,0.5);
+    --red-dim: rgba(224,48,48,0.08);
+    --green: #22c55e;
+    --green-glow: rgba(34,197,94,0.5);
+    --green-dim: rgba(34,197,94,0.07);
+    --text: #e0e0e0;
+    --text-mid: #555;
+    --text-dim: #333;
+  }
+
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+
+  /* ── Fullscreen overlay ─────────────────────────── */
+  #fs-overlay {
+    position: fixed; inset: 0;
+    background: rgba(8,8,8,0.94);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    z-index: 9999; cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: opacity 0.4s;
+  }
+  #fs-overlay .fs-sub  { font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.18em; color:#444; text-transform:uppercase; }
+  #fs-overlay .fs-logo { font-family:'IBM Plex Mono',monospace; font-size:34px; font-weight:600; color:#fff; letter-spacing:.06em; }
+  #fs-overlay .fs-logo span { color: var(--red); }
+  #fs-overlay .fs-btn  { margin-top:10px; border:1px solid #2a2a2a; border-radius:3px; padding:10px 30px; font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.12em; color:#444; text-transform:uppercase; transition:all .2s; }
+  #fs-overlay:hover .fs-btn { border-color:var(--red); color:#fff; box-shadow:0 0 14px var(--red-glow); }
+  #fs-overlay.gone { opacity:0; pointer-events:none; }
+
+  /* ── Header ─────────────────────────────────────── */
+  header {
+    flex-shrink: 0;
+    padding: 32px 48px 20px;
+    border-left: 3px solid var(--red);
+    margin: 32px 48px 0;
+  }
+  header h1 { font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; letter-spacing:.05em; color:#fff; }
+  header p  { font-size:11px; color:var(--text-mid); margin-top:5px; font-family:'IBM Plex Mono',monospace; letter-spacing:.03em; }
+
+  /* ── Legend ─────────────────────────────────────── */
+  .legend { display:flex; gap:28px; padding: 14px 48px; flex-shrink:0; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:10px; font-family:'IBM Plex Mono',monospace; color:var(--text-mid); letter-spacing:.04em; }
+  .l-box  { width:22px; height:14px; border-radius:2px; border:1.5px solid var(--red); background:var(--red-dim); }
+  .l-ms   { width:12px; height:12px; border:1.5px solid var(--green); background:var(--green-dim); transform:rotate(45deg); flex-shrink:0; }
+
+  /* ── SVG container ──────────────────────────────── */
+  #chart-wrap {
+    flex: 1;
+    overflow: hidden;
+    padding: 0 24px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  svg#net { width:100%; height:100%; }
+
+  /* ── Node styles ────────────────────────────────── */
+  .node-rect {
+    rx: 4; ry: 4;
+    stroke-width: 1.5;
+    transition: filter 0.25s;
+    cursor: default;
+  }
+  .node-task  { fill: var(--red-dim);   stroke: var(--red); }
+  .node-ms    { fill: var(--green-dim); stroke: var(--green); }
+
+  .node-group:hover .node-task { filter: drop-shadow(0 0 10px rgba(224,48,48,0.6)); }
+  .node-group:hover .node-ms   { filter: drop-shadow(0 0 10px rgba(34,197,94,0.6)); }
+
+  .node-title {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11.5px;
+    font-weight: 600;
+    fill: #ddd;
+  }
+  .node-title-ms { fill: #8effc0; }
+
+  .node-dur {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    fill: #666;
+  }
+  .node-date {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    fill: #444;
+  }
+  .node-date-val {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    fill: #777;
+  }
+
+  .node-divider { stroke: #1e1e1e; stroke-width: 1; }
+
+  /* phase badge */
+  .phase-badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 8.5px;
+    fill: #ff5555;
+    letter-spacing: .06em;
+  }
+
+  /* ── Arrows ─────────────────────────────────────── */
+  .arrow { fill: none; stroke: var(--red); stroke-width: 1.5; opacity: 0.55; }
+  .arrow-ms { stroke: var(--green); opacity: 0.4; }
+
+  /* ── Tooltip ─────────────────────────────────────── */
+  #tip {
+    position: fixed;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 4px;
+    padding: 9px 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .15s;
+    z-index: 500;
+    line-height: 1.75;
+    white-space: nowrap;
+    box-shadow: 0 4px 24px rgba(0,0,0,.7);
+  }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .node-group { animation: fadeUp .4s ease both; }
+</style>
+</head>
+<body>
+
+<div id="fs-overlay">
+  <div class="fs-sub">FairStride · Netzplan</div>
+  <div class="fs-logo">FAIR<span>STRIDE</span></div>
+  <div class="fs-btn">Klicken zum Starten</div>
+</div>
+
+<div id="tip"></div>
+
+<header>
+  <h1>NETZPLAN</h1>
+  <p>KRITISCHER PFAD &nbsp;//&nbsp; 02.03.2026 → 06.08.2026 &nbsp;//&nbsp; 113 ARBEITSTAGE</p>
+</header>
+
+<div class="legend">
+  <div class="legend-item"><div class="l-box"></div>Aufgabe / Kritischer Pfad</div>
+  <div class="legend-item"><div class="l-ms"></div>Meilenstein</div>
+</div>
+
+<div id="chart-wrap">
+  <svg id="net" viewBox="0 0 1280 480" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+
+<script>
+// ── Fullscreen ──────────────────────────────────────
+const ov = document.getElementById('fs-overlay');
+ov.addEventListener('click', () => {
+  const el = document.documentElement;
+  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+  if (req) req.call(el).catch(()=>{});
+  ov.classList.add('gone');
+  setTimeout(()=>ov.style.display='none', 450);
+});
+
+// ── Layout constants ────────────────────────────────
+const NW = 162, NH = 80, CGAP = 26, RGAP = 82;
+const SVG_W = 1280;
+
+// Row start X (centered)
+function rowStartX(cols) {
+  return (SVG_W - (cols * NW + (cols-1) * CGAP)) / 2;
+}
+
+const rowY = [
+  50,
+  50 + NH + RGAP,           // 212
+  50 + NH + RGAP + NH + RGAP // 374
+];
+
+const R0 = rowStartX(4);  // 4 nodes
+const R1 = rowStartX(5);  // 5 nodes
+const R2 = rowStartX(6);  // 6 nodes
+
+function nx(row, col) {
+  return [R0, R1, R2][row] + col * (NW + CGAP);
+}
+function ny(row) { return rowY[row]; }
+
+// ── Node data ────────────────────────────────────────
+const nodes = [
+  // Row 0
+  { id:0,  row:0, col:0, type:'ms',   phase:'PH.1', title:'Ausarbeitung\ngestartet',           dur:'0 Tage', start:'02.03.26', finish:'02.03.26' },
+  { id:1,  row:0, col:1, type:'task', phase:'PH.1', title:'Project Plannung',                  dur:'10 Tage',start:'03.03.26', finish:'16.03.26' },
+  { id:2,  row:0, col:2, type:'task', phase:'PH.1', title:'Team bauen',                        dur:'5 Tage', start:'17.03.26', finish:'23.03.26' },
+  { id:3,  row:0, col:3, type:'ms',   phase:'PH.1', title:'Konzept\nbeendet',                  dur:'0 Tage', start:'23.03.26', finish:'23.03.26' },
+  // Row 1
+  { id:4,  row:1, col:0, type:'task', phase:'PH.2', title:'Reschärsche',                       dur:'20 Tage',start:'24.03.26', finish:'20.04.26' },
+  { id:5,  row:1, col:1, type:'task', phase:'PH.2', title:'CAD Konstruktion',                  dur:'50 Tage',start:'21.04.26', finish:'29.06.26' },
+  { id:6,  row:1, col:2, type:'ms',   phase:'PH.2', title:'Konstruktion\nbeendet',             dur:'0 Tage', start:'29.06.26', finish:'29.06.26' },
+  { id:7,  row:1, col:3, type:'task', phase:'PH.3', title:'Samples kaufen',                    dur:'3 Tage', start:'30.06.26', finish:'02.07.26' },
+  { id:8,  row:1, col:4, type:'ms',   phase:'PH.3', title:'Material\ngeliefert',               dur:'0 Tage', start:'02.07.26', finish:'02.07.26' },
+  // Row 2
+  { id:9,  row:2, col:0, type:'task', phase:'PH.4', title:'Designs\nprobieren',                dur:'25 Tage',start:'03.07.26', finish:'06.08.26' },
+  { id:10, row:2, col:1, type:'ms',   phase:'PH.4', title:'Prototyp\ngebaut',                  dur:'0 Tage', start:'06.08.26', finish:'06.08.26' },
+  { id:11, row:2, col:2, type:'ms',   phase:'PH.5', title:'Überprüfung\nstartet',              dur:'0 Tage', start:'06.08.26', finish:'06.08.26' },
+  { id:12, row:2, col:3, type:'ms',   phase:'PH.5', title:'Tests\ndurchgeführt',               dur:'0 Tage', start:'06.08.26', finish:'06.08.26' },
+  { id:13, row:2, col:4, type:'ms',   phase:'PH.6', title:'Sicherheitsprüf.\nabgeschlossen',  dur:'0 Tage', start:'06.08.26', finish:'06.08.26' },
+  { id:14, row:2, col:5, type:'ms',   phase:'PH.7', title:'Herstellung\nstartet',             dur:'0 Tage', start:'06.08.26', finish:'06.08.26' },
+];
+
+// ── Connections ──────────────────────────────────────
+const edges = [
+  // row 0
+  [0,1],[1,2],[2,3],
+  // cross row 0→1
+  [3,4],
+  // row 1
+  [4,5],[5,6],[6,7],[7,8],
+  // cross row 1→2
+  [8,9],
+  // row 2
+  [9,10],[10,11],[11,12],[12,13],[13,14],
+];
+
+// ── SVG NS helper ────────────────────────────────────
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const svg = document.getElementById('net');
+
+function el(tag, attrs={}) {
+  const e = document.createElementNS(SVG_NS, tag);
+  for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+  return e;
+}
+
+// ── Arrowhead marker ─────────────────────────────────
+const defs = el('defs');
+
+function makeMarker(id, color) {
+  const m = el('marker', { id, markerWidth:'7', markerHeight:'7', refX:'6', refY:'3', orient:'auto' });
+  m.appendChild(el('path', { d:'M0,0 L7,3 L0,6 L1.5,3 Z', fill:color }));
+  defs.appendChild(m);
+}
+makeMarker('arr-red',   '#e03030');
+makeMarker('arr-green', '#22c55e');
+svg.appendChild(defs);
+
+// ── Draw edges ───────────────────────────────────────
+function nodeCenter(n) {
+  return { x: nx(n.row, n.col) + NW/2, y: ny(n.row) + NH/2 };
+}
+
+function drawEdge(a, b) {
+  const isMs = a.type === 'ms' && b.type === 'ms';
+  const color = isMs ? '#22c55e' : '#e03030';
+  const mId   = isMs ? 'arr-green' : 'arr-red';
+  const cls   = isMs ? 'arrow arrow-ms' : 'arrow';
+
+  let d;
+
+  if (a.row === b.row) {
+    // Horizontal: right edge of a → left edge of b
+    const x1 = nx(a.row, a.col) + NW;
+    const y1 = ny(a.row) + NH/2;
+    const x2 = nx(b.row, b.col);
+    const y2 = ny(b.row) + NH/2;
+    const mx = (x1+x2)/2;
+    d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+  } else {
+    // Cross-row: bottom-center of a → elbow → top-center of b
+    const x1 = nx(a.row, a.col) + NW/2;
+    const y1 = ny(a.row) + NH;
+    const x2 = nx(b.row, b.col) + NW/2;
+    const y2 = ny(b.row);
+    const elbY = y1 + (y2 - y1) * 0.45;
+    d = `M${x1},${y1} L${x1},${elbY} L${x2},${elbY} L${x2},${y2}`;
+  }
+
+  const path = el('path', { d, class: cls, 'marker-end': `url(#${mId})` });
+  svg.appendChild(path);
+}
+
+edges.forEach(([ai, bi]) => {
+  const a = nodes.find(n=>n.id===ai);
+  const b = nodes.find(n=>n.id===bi);
+  drawEdge(a, b);
+});
+
+// ── Draw nodes ───────────────────────────────────────
+const tip = document.getElementById('tip');
+
+nodes.forEach((n, i) => {
+  const x = nx(n.row, n.col);
+  const y = ny(n.row);
+  const isMs = n.type === 'ms';
+  const bColor = isMs ? '#22c55e' : '#e03030';
+  const bFill  = isMs ? 'rgba(34,197,94,0.06)' : 'rgba(224,48,48,0.07)';
+
+  const g = el('g', { class: 'node-group', style: `animation-delay:${i*45}ms` });
+
+  // Background rect
+  const rect = el('rect', {
+    x, y, width: NW, height: NH, rx:4, ry:4,
+    fill: bFill, stroke: bColor, 'stroke-width': '1.5'
+  });
+  g.appendChild(rect);
+
+  // Phase badge top-right
+  const phBadge = el('text', {
+    x: x + NW - 8, y: y + 12,
+    'text-anchor': 'end',
+    'font-family': 'IBM Plex Mono, monospace',
+    'font-size': '8',
+    fill: isMs ? '#22c55e' : '#e03030',
+    opacity: '0.6'
+  });
+  phBadge.textContent = n.phase;
+  g.appendChild(phBadge);
+
+  // Title (split on \n)
+  const lines = n.title.split('\n');
+  const titleY = lines.length > 1 ? y + 20 : y + 24;
+  lines.forEach((line, li) => {
+    const t = el('text', {
+      x: x + 10,
+      y: titleY + li * 13,
+      'font-family': 'IBM Plex Sans, sans-serif',
+      'font-size': '11.5',
+      'font-weight': '600',
+      fill: isMs ? '#8effc0' : '#ddd'
+    });
+    t.textContent = line;
+    g.appendChild(t);
+  });
+
+  // Divider
+  const divY = y + (lines.length > 1 ? 44 : 38);
+  g.appendChild(el('line', {
+    x1: x+8, y1: divY, x2: x+NW-8, y2: divY,
+    stroke: '#1e1e1e', 'stroke-width': '1'
+  }));
+
+  // Duration
+  const durT = el('text', {
+    x: x + 10, y: divY + 13,
+    'font-family': 'IBM Plex Mono, monospace',
+    'font-size': '9.5',
+    fill: isMs ? '#22c55e' : '#e03030',
+    opacity: '0.7'
+  });
+  durT.textContent = n.dur;
+  g.appendChild(durT);
+
+  // Dates
+  const dateT = el('text', {
+    x: x + NW - 8, y: divY + 13,
+    'text-anchor': 'end',
+    'font-family': 'IBM Plex Mono, monospace',
+    'font-size': '9',
+    fill: '#555'
+  });
+  if (n.start === n.finish) {
+    dateT.textContent = n.start;
+  } else {
+    dateT.textContent = `${n.start} → ${n.finish}`;
+  }
+  g.appendChild(dateT);
+
+  // Hover
+  rect.addEventListener('mouseenter', e => {
+    const c = isMs ? '#22c55e' : '#ff5555';
+    tip.innerHTML = `<span style="color:${c};font-weight:600">${n.title.replace('\n',' ')}</span><br><span style="color:#444">Phase: &nbsp;</span>${n.phase}<br><span style="color:#444">Dauer: &nbsp;</span>${n.dur}<br><span style="color:#444">Start: &nbsp;</span>${n.start}<br><span style="color:#444">Ende: &nbsp;&nbsp;</span>${n.finish}`;
+    tip.style.opacity = '1';
+    posTip(e);
+  });
+  rect.addEventListener('mousemove', posTip);
+  rect.addEventListener('mouseleave', () => tip.style.opacity = '0');
+
+  svg.appendChild(g);
+});
+
+function posTip(e) {
+  tip.style.left = Math.min(e.clientX+14, window.innerWidth-230)+'px';
+  tip.style.top  = Math.max(e.clientY-12, 8)+'px';
+}
+</script>
+</body>
+</html>
