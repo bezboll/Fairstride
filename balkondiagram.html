@@ -3,587 +3,371 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FairStride – Projektplan</title>
+<title>FairStride – Gantt v3</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #080808;
-    --bg2: #0f0f0f;
-    --grid: #111;
-    --red: #e03030;
-    --red-glow: rgba(224, 48, 48, 0.45);
-    --green: #22c55e;
-    --green-glow: rgba(34, 197, 94, 0.5);
-    --text: #e8e8e8;
-    --text-dim: #444;
-    --text-mid: #666;
-    --phase-label: #ff5555;
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080808;--bg2:#0c0c0c;--grid:#111;
+    --red:#e03030;--red-g:rgba(224,48,48,.5);--red-d:rgba(224,48,48,.08);
+    --green:#22c55e;--grn-g:rgba(34,197,94,.5);--grn-d:rgba(34,197,94,.07);
+    --text:#e0e0e0;--mid:#555;--dim:#2a2a2a;
   }
+  html,body{width:100%;height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;display:flex;flex-direction:column;height:100vh}
 
-  html, body {
-    width: 100%; height: 100%;
+  /* overlay */
+  #ov{position:fixed;inset:0;background:rgba(8,8,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:9999;cursor:pointer;backdrop-filter:blur(4px);transition:opacity .4s}
+  #ov .sub{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;color:#444;text-transform:uppercase}
+  #ov .logo{font-family:'IBM Plex Mono',monospace;font-size:34px;font-weight:600;color:#fff;letter-spacing:.06em}
+  #ov .logo span{color:var(--red)}
+  #ov .btn{margin-top:10px;border:1px solid #2a2a2a;border-radius:3px;padding:10px 30px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;color:#444;text-transform:uppercase;transition:all .2s}
+  #ov:hover .btn{border-color:var(--red);color:#fff;box-shadow:0 0 14px var(--red-g)}
+  #ov.gone{opacity:0;pointer-events:none}
+
+  /* header */
+  header{flex-shrink:0;margin:28px 40px 0;padding:0 0 0 18px;border-left:3px solid var(--red)}
+  header h1{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;letter-spacing:.05em;color:#fff}
+  header p{font-size:11px;color:var(--mid);margin-top:4px;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
+
+  /* legend */
+  .legend{display:flex;gap:24px;padding:10px 40px;flex-shrink:0;align-items:center}
+  .li{display:flex;align-items:center;gap:8px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--mid);letter-spacing:.04em}
+  .lb{width:22px;height:10px;border-radius:2px}
+  .lb-r{background:var(--red)}
+  .lb-g{background:var(--green)}
+  .lm{width:10px;height:10px;transform:rotate(45deg);flex-shrink:0}
+  .lm-r{background:var(--red)}
+  .lm-g{background:var(--green)}
+
+  /* scroll area */
+  #scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 40px 24px}
+  #scroll::-webkit-scrollbar{width:4px}
+  #scroll::-webkit-scrollbar-track{background:transparent}
+  #scroll::-webkit-scrollbar-thumb{background:#222;border-radius:2px}
+
+  /* chart layout */
+  .chart{display:flex;flex-direction:column;min-width:0}
+
+  /* timeline header (sticky) */
+  .tl-head{display:flex;position:sticky;top:0;background:var(--bg);z-index:50;border-bottom:1px solid #181818;padding-bottom:6px;padding-top:6px}
+  .lc{flex-shrink:0;padding-right:14px}
+  .lc-head{width:210px}
+  .mc{flex:1;position:relative}
+
+  .m-tick{position:absolute;bottom:0;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px}
+  .m-tick span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#3a3a3a;letter-spacing:.05em}
+  .m-tick div{width:1px;height:4px;background:#1e1e1e}
+
+  /* rows */
+  .row{display:flex;align-items:center;height:32px;position:relative}
+  .row-ph{height:38px;margin-top:8px}
+  .row-ph:first-of-type{margin-top:0}
+  .row:nth-child(even) .row-bg{background:rgba(255,255,255,.013)}
+
+  .row-bg{position:absolute;inset:0;left:-40px;right:-40px;pointer-events:none}
+  .row-lbl{width:210px;flex-shrink:0;padding-right:14px;position:relative;z-index:2}
+  .row-chart{flex:1;height:100%;position:relative;z-index:2}
+
+  .lbl-ph{font-size:10px;font-family:'IBM Plex Mono',monospace;color:#ff5555;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+  .lbl-task{font-size:11.5px;color:#bbb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .lbl-ms{color:#22c55e}
+
+  /* grid lines */
+  .gl{position:absolute;top:0;bottom:0;width:1px;background:#0e0e0e;pointer-events:none}
+
+  /* bars */
+  .bar{
+    position:absolute;top:50%;transform:translateY(-50%);
+    height:15px;border-radius:2px;cursor:pointer;
+    transition:box-shadow .25s, filter .25s;
   }
+  .bar::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.1) 0%,transparent 55%);border-radius:2px;pointer-events:none}
+  .bar-r{background:var(--red)}
+  .bar-g{background:var(--green)}
+  .bar-r:hover{box-shadow:0 0 20px var(--red-g),0 0 6px rgba(224,48,48,.7);filter:brightness(1.15);z-index:20}
+  .bar-g:hover{box-shadow:0 0 20px var(--grn-g),0 0 6px rgba(34,197,94,.7);filter:brightness(1.15);z-index:20}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'IBM Plex Sans', sans-serif;
-    padding: 48px 48px 32px;
-    overflow-x: hidden;
-    min-height: 100vh;
+  .bar-lbl{position:absolute;left:7px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:9px;color:rgba(255,255,255,.45);pointer-events:none;white-space:nowrap}
+
+  /* milestones */
+  .ms{position:absolute;top:50%;transform:translate(-50%,-50%) rotate(45deg);width:10px;height:10px;cursor:pointer;transition:box-shadow .25s,filter .25s;z-index:10}
+  .ms-r{background:var(--red)}
+  .ms-g{background:var(--green)}
+  .ms-r:hover{box-shadow:0 0 16px var(--red-g);filter:brightness(1.3)}
+  .ms-g:hover{box-shadow:0 0 16px var(--grn-g);filter:brightness(1.3)}
+  .ms-vl{position:absolute;top:0;bottom:0;width:1px;background:repeating-linear-gradient(to bottom,rgba(34,197,94,.1) 0,rgba(34,197,94,.1) 3px,transparent 3px,transparent 7px);pointer-events:none}
+  .ms-vl-r{background:repeating-linear-gradient(to bottom,rgba(224,48,48,.1) 0,rgba(224,48,48,.1) 3px,transparent 3px,transparent 7px)}
+
+  /* phase span bracket */
+  .ph-span{position:absolute;top:50%;transform:translateY(-50%);height:3px;border-radius:1px;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.15);pointer-events:none}
+
+  /* TODAY line */
+  .today-line{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,200,0,.25);pointer-events:none;z-index:5}
+  .today-line::before{content:'TODAY';position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:8px;color:rgba(255,200,0,.4);letter-spacing:.05em;white-space:nowrap}
+
+  /* TOOLTIP — large presentation-friendly */
+  #tip{
+    position:fixed;
+    background:#111;
+    border:1px solid #222;
+    border-radius:6px;
+    padding:18px 22px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13px;
+    color:var(--text);
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .15s;
+    z-index:1000;
+    line-height:1.8;
+    white-space:nowrap;
+    box-shadow:0 8px 40px rgba(0,0,0,.8);
+    min-width:320px;
   }
+  .tip-title{font-size:15px;font-weight:600;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #1e1e1e}
+  .tip-row{display:flex;gap:12px}
+  .tip-key{color:#444;min-width:100px}
+  .tip-val{color:#ccc}
+  .tip-val-r{color:#ff6060}
+  .tip-val-g{color:#5dfc8a}
+  .tip-sep{height:1px;background:#1a1a1a;margin:8px 0}
+  .tip-cost{font-size:16px;font-weight:600;color:#ff6060;margin-top:6px}
 
-  /* ── Fullscreen overlay ───────────────────────────── */
-  #fs-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(8,8,8,0.92);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    z-index: 9999;
-    cursor: pointer;
-    backdrop-filter: blur(4px);
-    transition: opacity 0.4s;
-  }
-
-  #fs-overlay .fs-title {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
-    letter-spacing: 0.18em;
-    color: #555;
-    text-transform: uppercase;
-  }
-
-  #fs-overlay .fs-logo {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 36px;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: 0.06em;
-  }
-
-  #fs-overlay .fs-logo span {
-    color: var(--red);
-  }
-
-  #fs-overlay .fs-btn {
-    margin-top: 12px;
-    border: 1px solid #333;
-    border-radius: 3px;
-    padding: 10px 28px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.12em;
-    color: var(--text-mid);
-    text-transform: uppercase;
-    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
-  }
-
-  #fs-overlay:hover .fs-btn {
-    border-color: var(--red);
-    color: #fff;
-    box-shadow: 0 0 16px var(--red-glow);
-  }
-
-  #fs-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
-
-  /* ── Header ───────────────────────────────────────── */
-  header {
-    margin-bottom: 36px;
-    border-left: 3px solid var(--red);
-    padding-left: 20px;
-  }
-
-  header h1 {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 26px;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    color: #fff;
-  }
-
-  header p {
-    font-size: 12px;
-    color: var(--text-mid);
-    margin-top: 6px;
-    font-family: 'IBM Plex Mono', monospace;
-    letter-spacing: 0.03em;
-  }
-
-  /* ── Legend ───────────────────────────────────────── */
-  .legend {
-    display: flex;
-    gap: 28px;
-    margin-bottom: 28px;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 11px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--text-mid);
-    letter-spacing: 0.04em;
-  }
-
-  .legend-bar {
-    width: 26px;
-    height: 10px;
-    border-radius: 2px;
-    background: var(--red);
-  }
-
-  .legend-diamond {
-    width: 10px;
-    height: 10px;
-    background: var(--green);
-    transform: rotate(45deg);
-    flex-shrink: 0;
-  }
-
-  /* ── Chart layout ─────────────────────────────────── */
-  .chart-wrapper { display: flex; flex-direction: column; }
-
-  .chart-header {
-    display: flex;
-    height: 40px;
-    align-items: flex-end;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #1a1a1a;
-    margin-bottom: 2px;
-  }
-
-  .col-label { width: 230px; flex-shrink: 0; padding-right: 16px; }
-
-  .col-label span {
-    font-size: 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: #333;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-  }
-
-  .month-area {
-    flex: 1;
-    position: relative;
-    height: 100%;
-  }
-
-  .month-tick {
-    position: absolute;
-    bottom: 0;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3px;
-  }
-
-  .month-tick span {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 10px;
-    color: #444;
-    letter-spacing: 0.06em;
-  }
-
-  .month-tick div {
-    width: 1px;
-    height: 5px;
-    background: #222;
-  }
-
-  /* ── Rows ─────────────────────────────────────────── */
-  .chart-row {
-    display: flex;
-    align-items: center;
-    height: 36px;
-    position: relative;
-  }
-
-  .phase-row {
-    height: 42px;
-    margin-top: 10px;
-  }
-
-  .phase-row:first-child { margin-top: 0; }
-
-  .row-label {
-    width: 230px;
-    flex-shrink: 0;
-    padding-right: 16px;
-    position: relative;
-    z-index: 1;
-  }
-
-  .task-name {
-    font-size: 12px;
-    color: #bbb;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .phase-name {
-    font-size: 10.5px;
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--phase-label);
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .row-chart {
-    flex: 1;
-    height: 100%;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* alternating row bg */
-  .row-alt::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    left: -230px;
-    right: -48px;
-    background: rgba(255,255,255,0.015);
-    pointer-events: none;
-  }
-
-  /* ── Bars ─────────────────────────────────────────── */
-  .task-bar {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    height: 14px;
-    border-radius: 2px;
-    background: var(--red);
-    cursor: default;
-    transition: box-shadow 0.25s, filter 0.25s;
-  }
-
-  .task-bar::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 55%);
-    border-radius: 2px;
-  }
-
-  .task-bar:hover {
-    box-shadow: 0 0 18px var(--red-glow), 0 0 6px rgba(224,48,48,0.7);
-    filter: brightness(1.15);
-    z-index: 20;
-  }
-
-  .bar-dur {
-    position: absolute;
-    left: 6px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 9.5px;
-    color: rgba(255,255,255,0.45);
-    pointer-events: none;
-  }
-
-  /* ── Milestones ───────────────────────────────────── */
-  .milestone {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%) rotate(45deg);
-    width: 10px;
-    height: 10px;
-    background: var(--green);
-    cursor: default;
-    transition: box-shadow 0.25s, filter 0.25s;
-    z-index: 10;
-  }
-
-  .milestone:hover {
-    box-shadow: 0 0 16px var(--green-glow), 0 0 5px rgba(34,197,94,0.9);
-    filter: brightness(1.2);
-    z-index: 20;
-  }
-
-  .ms-vline {
-    position: absolute;
-    top: 0; bottom: 0;
-    width: 1px;
-    background: repeating-linear-gradient(to bottom, rgba(34,197,94,0.12) 0, rgba(34,197,94,0.12) 4px, transparent 4px, transparent 8px);
-    pointer-events: none;
-  }
-
-  /* ── Tooltip ──────────────────────────────────────── */
-  #tooltip {
-    position: fixed;
-    background: #141414;
-    border: 1px solid #282828;
-    border-radius: 4px;
-    padding: 9px 14px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: var(--text);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s;
-    z-index: 1000;
-    line-height: 1.7;
-    white-space: nowrap;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
-  }
-
-  /* ── Stats ────────────────────────────────────────── */
-  .stats {
-    margin-top: 36px;
-    display: flex;
-    gap: 36px;
-    padding-top: 20px;
-    border-top: 1px solid #141414;
-  }
-
-  .stat-value {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 22px;
-    font-weight: 600;
-    color: var(--red);
-  }
-
-  .stat-label {
-    font-size: 10px;
-    color: var(--text-dim);
-    font-family: 'IBM Plex Mono', monospace;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-top: 3px;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .row-anim { animation: fadeUp 0.35s ease both; }
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .row{animation:fadeUp .35s ease both}
 </style>
 </head>
 <body>
 
-<!-- Fullscreen overlay -->
-<div id="fs-overlay">
-  <div class="fs-title">FairStride · Projektplan</div>
-  <div class="fs-logo">FAIR<span>STRIDE</span></div>
-  <div class="fs-btn">Klicken zum Starten</div>
+<div id="ov">
+  <div class="sub">FairStride · Projektplan v3</div>
+  <div class="logo">FAIR<span>STRIDE</span></div>
+  <div class="btn">Klicken zum Starten</div>
 </div>
 
-<div id="tooltip"></div>
+<div id="tip"></div>
 
 <header>
-  <h1>FAIRSTRIDE</h1>
-  <p>PROJEKTPLAN &nbsp;//&nbsp; 02.03.2026 → 06.08.2026 &nbsp;//&nbsp; 113 ARBEITSTAGE</p>
+  <h1>GANTT – PROJEKTPLAN</h1>
+  <p>02.03.2026 → 28.08.2026 &nbsp;//&nbsp; 129 ARBEITSTAGE &nbsp;//&nbsp; € 95.520 GESAMT</p>
 </header>
 
 <div class="legend">
-  <div class="legend-item"><div class="legend-bar"></div>Kritischer Pfad</div>
-  <div class="legend-item"><div class="legend-diamond"></div>Meilenstein</div>
+  <div class="li"><div class="lb lb-r"></div>Kritischer Pfad</div>
+  <div class="li"><div class="lb lb-g"></div>Nicht-kritisch / Parallel</div>
+  <div class="li"><div class="lm lm-r"></div>Meilenstein (kritisch)</div>
+  <div class="li"><div class="lm lm-g"></div>Meilenstein</div>
+  <div class="li" style="color:rgba(255,200,0,.5)">── Heute</div>
 </div>
 
-<div class="chart-wrapper" id="gantt-root"></div>
-
-<div class="stats">
-  <div><div class="stat-value">113</div><div class="stat-label">Arbeitstage</div></div>
-  <div><div class="stat-value">7</div><div class="stat-label">Phasen</div></div>
-  <div><div class="stat-value">100%</div><div class="stat-label">Kritischer Pfad</div></div>
-  <div><div class="stat-value">06.08.26</div><div class="stat-label">Fertigstellung</div></div>
+<div id="scroll">
+<div class="chart" id="chart"></div>
 </div>
 
 <script>
-// ── Fullscreen ───────────────────────────────────────
-const overlay = document.getElementById('fs-overlay');
-overlay.addEventListener('click', () => {
-  const el = document.documentElement;
-  const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-  if (req) req.call(el).catch(() => {});
-  overlay.classList.add('hidden');
-  setTimeout(() => overlay.style.display = 'none', 400);
+// ── Fullscreen ────────────────────────────────────────
+const ov = document.getElementById('ov');
+ov.addEventListener('click', () => {
+  const e = document.documentElement;
+  const r = e.requestFullscreen||e.webkitRequestFullscreen||e.mozRequestFullScreen||e.msRequestFullscreen;
+  if(r) r.call(e).catch(()=>{});
+  ov.classList.add('gone');
+  setTimeout(()=>ov.style.display='none',450);
 });
 
-// ── Data ─────────────────────────────────────────────
-const START = new Date('2026-03-02');
-const END   = new Date('2026-08-06');
-const TOTAL = END - START;
+// ── Date helpers ──────────────────────────────────────
+const S = new Date('2026-03-02');
+const E = new Date('2026-08-28');
+const TOT = E - S;
+const pct = d => ((new Date(d)-S)/TOT)*100;
+const span = (s,e) => ((new Date(e)-new Date(s))/TOT)*100;
+const fmt = d => new Date(d).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
 
-function pct(d)    { return ((new Date(d) - START) / TOTAL) * 100; }
-function span(s,e) { return ((new Date(e) - new Date(s)) / TOTAL) * 100; }
-function fmt(d)    { return new Date(d).toLocaleDateString('de-DE', {day:'2-digit',month:'2-digit',year:'2-digit'}); }
+// critical path IDs
+const CRIT = new Set([3,4,5,7,9,11,13,14,16,17,18,19,21,22,23,24,26,27,31,33,34,35,36,37]);
 
+// ── Data ──────────────────────────────────────────────
 const phases = [
-  { label:'Phase 1 · Konzept', tasks:[
-    { label:'Ausarbeitung gestartet',           type:'ms',   date:'2026-03-02' },
-    { label:'Project Plannung',                  type:'bar',  start:'2026-03-03', end:'2026-03-16', days:10 },
-    { label:'Team bauen',                        type:'bar',  start:'2026-03-17', end:'2026-03-23', days:5  },
-    { label:'Konzept beendet',                   type:'ms',   date:'2026-03-23' },
+  { label:'Phase 1 · Konzept', rows:[
+    { id:3,  type:'ms',   crit:true,  label:'Ausarbeitung gestartet',                date:'2026-03-02', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
+    { id:4,  type:'bar',  crit:true,  label:'Projektziel definieren',                start:'2026-03-03',end:'2026-03-09',days:5, resources:'Boller, Krenn',      work:'80 h',   cost:'€ 2.400' },
+    { id:5,  type:'bar',  crit:true,  label:'Projekt- und Ressourcenplanung',        start:'2026-03-10',end:'2026-03-16',days:5, resources:'Boller, Krenn',      work:'80 h',   cost:'€ 2.400' },
+    { id:6,  type:'bar',  crit:false, label:'Team bauen',                            start:'2026-03-12',end:'2026-03-16',days:3, resources:'Boller, Krenn',      work:'48 h',   cost:'€ 1.440', note:'Parallel mit #5' },
+    { id:7,  type:'ms',   crit:true,  label:'Konzept beendet',                       date:'2026-03-16', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
-  { label:'Phase 2 · Konstruktion', tasks:[
-    { label:'Reschärsche',                       type:'bar',  start:'2026-03-24', end:'2026-04-20', days:20 },
-    { label:'CAD Konstruktion',                  type:'bar',  start:'2026-04-21', end:'2026-06-29', days:50 },
-    { label:'Konstruktion beendet',              type:'ms',   date:'2026-06-29' },
+  { label:'Phase 2 · Konstruktion', rows:[
+    { id:9,  type:'bar',  crit:true,  label:'Market Research',                       start:'2026-03-17',end:'2026-03-26',days:8, resources:'Bauer, Boller, Krenn', work:'192 h', cost:'€ 5.120' },
+    { id:10, type:'bar',  crit:false, label:'Technische Anforderungen definieren',   start:'2026-03-23',end:'2026-03-25',days:3, resources:'Krenn',              work:'24 h',   cost:'€ 720',  note:'Parallel mit #9' },
+    { id:11, type:'bar',  crit:true,  label:'Konzeptentwicklung',                    start:'2026-03-27',end:'2026-04-09',days:10,resources:'Bauer, Boller, Krenn',work:'240 h', cost:'€ 6.400' },
+    { id:12, type:'bar',  crit:false, label:'CAD Modelle erstellen',                 start:'2026-04-10',end:'2026-05-07',days:20,resources:'Bauer, Boller',      work:'320 h',  cost:'€ 8.000', note:'Parallel mit FEM (#13)' },
+    { id:13, type:'bar',  crit:true,  label:'Simulation & Belastungsanalyse (FEM)',  start:'2026-05-01',end:'2026-05-14',days:10,resources:'Bauer, Boller',      work:'160 h',  cost:'€ 4.000', note:'Kritischer Endpfad' },
+    { id:14, type:'ms',   crit:true,  label:'Konstruktion beendet',                  date:'2026-05-14', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
-  { label:'Phase 3 · Material', tasks:[
-    { label:'Samples kaufen',                    type:'bar',  start:'2026-06-30', end:'2026-07-02', days:3  },
-    { label:'Material geliefert',                type:'ms',   date:'2026-07-02' },
+  { label:'Phase 3 · Material', rows:[
+    { id:16, type:'bar',  crit:true,  label:'Werkstoffauswahl',                      start:'2026-05-11',end:'2026-05-12',days:2, resources:'Bauer, Boller, Test, Krenn', work:'64 h', cost:'€ 1.760' },
+    { id:17, type:'bar',  crit:true,  label:'Lieferantenrecherche & -bewertung',     start:'2026-05-13',end:'2026-05-14',days:2, resources:'Krenn',              work:'16 h',   cost:'€ 480' },
+    { id:18, type:'bar',  crit:true,  label:'Materialbeschaffung organisieren',      start:'2026-05-15',end:'2026-05-18',days:2, resources:'Krenn',              work:'16 h',   cost:'€ 480' },
+    { id:19, type:'ms',   crit:true,  label:'Material geliefert',                    date:'2026-05-18', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
-  { label:'Phase 4 · Prototyp', tasks:[
-    { label:'Verschiedene Designs probieren',    type:'bar',  start:'2026-07-03', end:'2026-08-06', days:25 },
-    { label:'Prototyp gebaut',                   type:'ms',   date:'2026-08-06' },
+  { label:'Phase 4 · Prototyp', rows:[
+    { id:21, type:'bar',  crit:true,  label:'Fertigungsprozess festlegen',           start:'2026-05-19',end:'2026-05-19',days:1, resources:'Bauer, Boller, Test',work:'24 h',   cost:'€ 640' },
+    { id:22, type:'bar',  crit:true,  label:'Prototyp herstellen',                   start:'2026-05-20',end:'2026-05-26',days:5, resources:'Bauer, Faserverbund, Boller, Kunststoff, Masch.', work:'120 h', cost:'€ 13.000' },
+    { id:23, type:'bar',  crit:true,  label:'Prototyp optimieren',                   start:'2026-05-27',end:'2026-06-09',days:10,resources:'Boller, Test',       work:'160 h',  cost:'€ 4.800' },
+    { id:24, type:'ms',   crit:true,  label:'Prototyp gebaut',                       date:'2026-06-09', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
-  { label:'Phase 5 · Tests', tasks:[
-    { label:'Überprüfung startet',               type:'ms',   date:'2026-08-06' },
-    { label:'Tests durchgeführt',                type:'ms',   date:'2026-08-06' },
+  { label:'Phase 5 · Testen & Sicherheit', rows:[
+    { id:26, type:'ms',   crit:true,  label:'Überprüfung startet',                   date:'2026-06-09', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
+    { id:27, type:'bar',  crit:true,  label:'Mechanische Tests durchführen',         start:'2026-06-10',end:'2026-07-07',days:20,resources:'Test',              work:'160 h',  cost:'€ 4.800', note:'Längster Testpfad → kritisch' },
+    { id:28, type:'bar',  crit:false, label:'Praxistests mit Probanden',             start:'2026-06-10',end:'2026-06-16',days:5, resources:'Krenn',             work:'40 h',   cost:'€ 1.200', note:'Parallel mit #27' },
+    { id:29, type:'bar',  crit:false, label:'Leistungsanalyse & Ergonomie',          start:'2026-06-17',end:'2026-06-23',days:5, resources:'Bauer, Krenn',      work:'80 h',   cost:'€ 2.000', note:'Parallel mit #27' },
+    { id:30, type:'bar',  crit:false, label:'Sicherheit und Normprüfung',            start:'2026-06-10',end:'2026-06-16',days:5, resources:'Recht',             work:'40 h',   cost:'€ 1.400', note:'Parallel mit #27' },
+    { id:31, type:'ms',   crit:true,  label:'Tests durchgeführt',                    date:'2026-07-07', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
-  { label:'Phase 6 · Sicherheit', tasks:[
-    { label:'Sicherheitsprüfung abgeschlossen',  type:'ms',   date:'2026-08-06' },
-  ]},
-  { label:'Phase 7 · Herstellung', tasks:[
-    { label:'Herstellung startet',               type:'ms',   date:'2026-08-06' },
+  { label:'Phase 7 · Herstellung', rows:[
+    { id:33, type:'bar',  crit:true,  label:'Serienfertigung planen',                start:'2026-07-08',end:'2026-07-10',days:3, resources:'Bauer, Boller, Krenn', work:'72 h', cost:'€ 1.920' },
+    { id:34, type:'bar',  crit:true,  label:'Maschinen & Werkzeuge einrichten',      start:'2026-07-13',end:'2026-07-24',days:10,resources:'Bauer, Krenn, Werkzeuge', work:'160 h', cost:'€ 14.000' },
+    { id:35, type:'bar',  crit:true,  label:'Pilotserie',                            start:'2026-07-27',end:'2026-07-31',days:5, resources:'Bauer, Boller',      work:'80 h',   cost:'€ 2.000' },
+    { id:36, type:'bar',  crit:true,  label:'Herstellungsverfahren optimieren',      start:'2026-08-03',end:'2026-08-28',days:20,resources:'Bauer, Krenn',       work:'320 h',  cost:'€ 8.000' },
+    { id:37, type:'ms',   crit:true,  label:'Herstellung startet',                   date:'2026-08-28', dur:'0 Tage',  resources:'—',                          work:'0 h',    cost:'€ 0' },
   ]},
 ];
 
 const months = [
-  { label:"MÄR '26", date:'2026-03-02' },
-  { label:"APR '26", date:'2026-04-01' },
-  { label:"MAI '26", date:'2026-05-01' },
-  { label:"JUN '26", date:'2026-06-01' },
-  { label:"JUL '26", date:'2026-07-01' },
-  { label:"AUG '26", date:'2026-08-01' },
+  { l:"MÄR '26", d:'2026-03-02' },
+  { l:"APR '26", d:'2026-04-01' },
+  { l:"MAI '26", d:'2026-05-01' },
+  { l:"JUN '26", d:'2026-06-01' },
+  { l:"JUL '26", d:'2026-07-01' },
+  { l:"AUG '26", d:'2026-08-01' },
+  { l:"SEP '26", d:'2026-09-01' },
 ];
 
-// ── Build ────────────────────────────────────────────
-const root    = document.getElementById('gantt-root');
-const tooltip = document.getElementById('tooltip');
+// ── Build ─────────────────────────────────────────────
+const chart = document.getElementById('chart');
+const tip = document.getElementById('tip');
 
-// Header
-const hdr = document.createElement('div');
-hdr.className = 'chart-header';
-
-const lSpacer = document.createElement('div');
-lSpacer.className = 'col-label';
-lSpacer.innerHTML = '<span>Aufgabe</span>';
-
-const mArea = document.createElement('div');
-mArea.className = 'month-area';
-months.forEach(m => {
-  const t = document.createElement('div');
-  t.className = 'month-tick';
-  t.style.left = pct(m.date) + '%';
-  t.innerHTML = `<span>${m.label}</span><div></div>`;
-  mArea.appendChild(t);
+// Timeline header
+const tlHead = div('div','tl-head');
+const tlLbl  = div('div','lc lc-head');
+tlLbl.innerHTML = '<span style="font-size:9.5px;font-family:IBM Plex Mono,monospace;color:#2a2a2a;letter-spacing:.06em;text-transform:uppercase">AUFGABE</span>';
+const tlMon = div('div','mc'); tlMon.style.position='relative'; tlMon.style.height='34px';
+months.forEach(m=>{
+  const t=div('div','m-tick'); t.style.left=pct(m.d)+'%';
+  t.innerHTML=`<span>${m.l}</span><div></div>`;
+  tlMon.appendChild(t);
 });
+tlHead.appendChild(tlLbl); tlHead.appendChild(tlMon);
+chart.appendChild(tlHead);
 
-hdr.appendChild(lSpacer);
-hdr.appendChild(mArea);
-root.appendChild(hdr);
+let delay=0, alt=false;
 
-let delay = 0;
-let altRow = false;
+phases.forEach((ph,pi)=>{
+  // phase row
+  const pr = div('div','row row-ph');
+  pr.style.animationDelay=(delay++*40)+'ms';
+  const pl = div('div','row-lbl'); pl.innerHTML=`<span class="lbl-ph">${ph.label.toUpperCase()}</span>`;
+  const pc = div('div','row-chart'); gridLines(pc);
+  pr.appendChild(pl); pr.appendChild(pc);
+  chart.appendChild(pr);
 
-function makeGridLines(parent) {
-  months.forEach(m => {
-    const gl = document.createElement('div');
-    gl.style.cssText = `position:absolute;top:0;bottom:0;left:${pct(m.date)}%;width:1px;background:#111;pointer-events:none;`;
-    parent.appendChild(gl);
-  });
-}
+  ph.rows.forEach(task=>{
+    alt=!alt;
+    const row = div('div','row');
+    row.style.animationDelay=(delay++*40)+'ms';
 
-phases.forEach((ph, pi) => {
-  // Phase header
-  const pRow = document.createElement('div');
-  pRow.className = `chart-row phase-row row-anim`;
-  pRow.style.animationDelay = (delay++ * 55) + 'ms';
+    // alt bg
+    const bg = div('div','row-bg');
+    if(alt) bg.style.background='rgba(255,255,255,.012)';
+    row.appendChild(bg);
 
-  const pLbl = document.createElement('div');
-  pLbl.className = 'row-label';
-  pLbl.innerHTML = `<span class="phase-name">${ph.label.toUpperCase()}</span>`;
+    const isMs = task.type==='ms';
+    const isCrit = task.crit;
+    const color = isCrit ? 'var(--red)' : 'var(--green)';
 
-  const pChart = document.createElement('div');
-  pChart.className = 'row-chart';
-  makeGridLines(pChart);
+    // label
+    const lbl = div('div','row-lbl');
+    lbl.innerHTML=`<span class="lbl-task${isMs?' lbl-ms':''}" style="color:${isMs?(isCrit?'#ff7070':'#5dfc8a'):'#bbb'}">${task.label}</span>`;
 
-  pRow.appendChild(pLbl);
-  pRow.appendChild(pChart);
-  root.appendChild(pRow);
+    // chart area
+    const rc = div('div','row-chart'); gridLines(rc);
 
-  // Tasks
-  ph.tasks.forEach(task => {
-    altRow = !altRow;
-    const row = document.createElement('div');
-    row.className = `chart-row row-anim${altRow ? ' row-alt' : ''}`;
-    row.style.animationDelay = (delay++ * 55) + 'ms';
-
-    const lbl = document.createElement('div');
-    lbl.className = 'row-label';
-    lbl.innerHTML = `<span class="task-name" style="color:${task.type==='ms'?'#22c55e':'#bbb'}">${task.label}</span>`;
-
-    const chart = document.createElement('div');
-    chart.className = 'row-chart';
-    makeGridLines(chart);
-
-    if (task.type === 'bar') {
-      const bar = document.createElement('div');
-      bar.className = 'task-bar';
-      bar.style.left  = pct(task.start) + '%';
-      bar.style.width = span(task.start, task.end) + '%';
-      if (span(task.start, task.end) > 4) {
-        bar.innerHTML = `<span class="bar-dur">${task.days}d</span><div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,0.1) 0%,transparent 55%);border-radius:2px;pointer-events:none;"></div>`;
-      }
-      bar.addEventListener('mouseenter', e => showTip(e, `<span style="color:#ff5555">${task.label}</span><br><span style="color:#444">Start:</span> ${fmt(task.start)}<br><span style="color:#444">Ende: </span> ${fmt(task.end)}<br><span style="color:#444">Dauer:</span> ${task.days} Arbeitstage`));
-      bar.addEventListener('mousemove', positionTip);
-      bar.addEventListener('mouseleave', hideTip);
-      chart.appendChild(bar);
-
-    } else {
-      // vertical dashed line
-      const vl = document.createElement('div');
-      vl.className = 'ms-vline';
-      vl.style.left = pct(task.date) + '%';
-      chart.appendChild(vl);
-
-      const ms = document.createElement('div');
-      ms.className = 'milestone';
-      ms.style.left = pct(task.date) + '%';
-      ms.addEventListener('mouseenter', e => showTip(e, `<span style="color:#22c55e">◆ ${task.label}</span><br><span style="color:#444">Datum:</span> ${fmt(task.date)}`));
-      ms.addEventListener('mousemove', positionTip);
-      ms.addEventListener('mouseleave', hideTip);
-      chart.appendChild(ms);
+    // today line
+    const today = new Date('2026-03-03');
+    if(today >= S && today <= E){
+      const tl=div('div','today-line'); tl.style.left=pct(today.toISOString().split('T')[0])+'%';
+      rc.appendChild(tl);
     }
 
-    row.appendChild(lbl);
-    row.appendChild(chart);
-    root.appendChild(row);
+    if(isMs){
+      const vl=div('div','ms-vl'+(isCrit?' ms-vl-r':'')); vl.style.left=pct(task.date)+'%'; rc.appendChild(vl);
+      const ms=div('div','ms ms-'+(isCrit?'r':'g')); ms.style.left=pct(task.date)+'%';
+      ms.addEventListener('mouseenter',e=>showTip(e,task,isCrit));
+      ms.addEventListener('mousemove',posTip);
+      ms.addEventListener('mouseleave',hideTip);
+      rc.appendChild(ms);
+    } else {
+      const bar=div('div','bar bar-'+(isCrit?'r':'g'));
+      bar.style.left=pct(task.start)+'%';
+      bar.style.width=Math.max(span(task.start,task.end),0.3)+'%';
+      if(span(task.start,task.end)>3) bar.innerHTML=`<span class="bar-lbl">${task.days}d</span>`;
+      bar.addEventListener('mouseenter',e=>showTip(e,task,isCrit));
+      bar.addEventListener('mousemove',posTip);
+      bar.addEventListener('mouseleave',hideTip);
+      rc.appendChild(bar);
+    }
+
+    row.appendChild(lbl); row.appendChild(rc);
+    chart.appendChild(row);
   });
 });
 
-// ── Tooltip helpers ───────────────────────────────────
-function showTip(e, html) {
-  tooltip.innerHTML = html;
-  tooltip.style.opacity = '1';
-  positionTip(e);
+// ── Tooltip ───────────────────────────────────────────
+function showTip(e, t, isCrit){
+  const c = isCrit ? '#ff6060' : '#5dfc8a';
+  const badge = isCrit
+    ? `<span style="background:rgba(224,48,48,.15);color:#ff6060;border:1px solid rgba(224,48,48,.3);border-radius:3px;padding:1px 7px;font-size:10px;margin-left:10px;">KRITISCH</span>`
+    : `<span style="background:rgba(34,197,94,.1);color:#5dfc8a;border:1px solid rgba(34,197,94,.25);border-radius:3px;padding:1px 7px;font-size:10px;margin-left:10px;">PARALLEL</span>`;
+
+  let html = `<div class="tip-title" style="color:${c}">ID ${t.id} &nbsp;·&nbsp; ${t.label} ${badge}</div>`;
+
+  if(t.type==='ms'){
+    html+=tipRow('Typ','Meilenstein')+tipRow('Datum', fmt(t.date));
+  } else {
+    html+=tipRow('Start', fmt(t.start))+tipRow('Ende', fmt(t.end))+tipRow('Dauer', t.days+' Arbeitstage');
+  }
+  html+=`<div class="tip-sep"></div>`;
+  html+=tipRow('Ressourcen', t.resources);
+  html+=tipRow('Aufwand', t.work);
+  if(t.note) html+=tipRow('Hinweis', t.note);
+  html+=`<div class="tip-sep"></div>`;
+  html+=`<div class="tip-cost">${t.cost}</div>`;
+
+  tip.innerHTML=html;
+  tip.style.opacity='1';
+  posTip(e);
 }
-function positionTip(e) {
-  const x = Math.min(e.clientX + 14, window.innerWidth - 240);
-  const y = Math.max(e.clientY - 12, 8);
-  tooltip.style.left = x + 'px';
-  tooltip.style.top  = y + 'px';
+
+function tipRow(k,v){
+  return `<div class="tip-row"><span class="tip-key">${k}:</span><span class="tip-val">${v}</span></div>`;
 }
-function hideTip() { tooltip.style.opacity = '0'; }
+
+function posTip(e){
+  const tw=tip.offsetWidth||340, th=tip.offsetHeight||180;
+  let x=e.clientX+18, y=e.clientY-20;
+  if(x+tw>window.innerWidth-10) x=e.clientX-tw-10;
+  if(y+th>window.innerHeight-10) y=window.innerHeight-th-10;
+  tip.style.left=Math.max(x,4)+'px'; tip.style.top=Math.max(y,4)+'px';
+}
+function hideTip(){ tip.style.opacity='0'; }
+
+// ── Helpers ───────────────────────────────────────────
+function div(tag,cls){ const e=document.createElement(tag); if(cls)e.className=cls; return e; }
+function gridLines(parent){
+  months.forEach(m=>{
+    const gl=div('div','gl'); gl.style.left=pct(m.d)+'%'; parent.appendChild(gl);
+  });
+}
 </script>
 </body>
 </html>
