@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OWAS Posture Risk Calculator</title>
+<title>OWAS Haltungsrisiko-Rechner</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap">
 <style>
 :root{--bg:#eef2f6;--card:#fff;--ink:#17202b;--mut:#5d6a7a;--line:#d3dbe4;--acc:#1f5fbf;--tint:#e4eefb;--a1:#2e9d5b;--a2:#f2c200;--a3:#f08a1c;--a4:#d63b3b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -69,40 +69,40 @@ h2{font-size:clamp(20px,2.6vw,28px);margin:18px 0 2px;font-weight:800}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style></head><body>
 <div class="app">
-<h1>OWAS posture risk</h1>
-<div class="mut">Describe one working posture. The tool looks up its risk in the OWAS table.</div>
-<div class="row pre"><span class="mut">Photo to analyse:</span><button class="btn tr" onclick="trial(1)">Trial 1</button><button class="btn tr" onclick="trial(2)">Trial 2</button><button class="btn tr" onclick="trial(3)">Trial 3</button></div>
+<h1>OWAS Haltungsrisiko</h1>
+<div class="mut">Beschreiben Sie eine Arbeitshaltung. Das Tool ermittelt das Risiko anhand der OWAS-Tabelle.</div>
+<div class="row pre"><span class="mut">Zu analysierendes Foto:</span><button class="btn tr" onclick="trial(1)">Versuch 1</button><button class="btn tr" onclick="trial(2)">Versuch 2</button><button class="btn tr" onclick="trial(3)">Versuch 3</button></div>
 <div id="app"></div>
 <div id="photo"></div>
-<p class="fn">Uses the standard OWAS lookup table (Karhu et al., 1977) as printed in Erdoğan et al. (2024). A screening aid, not a medical assessment.</p>
+<p class="fn">Verwendet die standardmäßige OWAS-Nachschlagetabelle (Karhu et al., 1977), wie in Erdoğan et al. (2024) abgedruckt. Ein Screening-Hilfsmittel, keine medizinische Beurteilung.</p>
 </div>
 <script>
 const T={"11":"111111111222222111111","12":"111111111222222111111","13":"111111111223223111112","21":"223223223333333222233","22":"223223233344344334234","23":"334223333344444444234","31":"111111112333444111111","32":"223111112444444333111","33":"223111233444444444111","41":"233223223444444444234","42":"334234334444444444234","43":"444234334444444444234"};
 const ac=(b,a,l,d)=>+T[""+b+a][(l-1)*3+d-1];
 const L="M30 44L27 76M30 44L33 76";
 const S=[
-{k:"Back",q:"How is the back positioned?",h:"Pick the closest match. 20° or more counts as bent.",o:[
-["Straight","Upright, under 20°",[30,14,"M30 20V44"+L+"M30 26L22 40"]],
-["Bent","Forward or back, 20°+",[49,20,"M30 44L44 26"+L+"M44 28L50 44"]],
-["Twisted","Twisted or bent sideways",[41,19,"M30 44L38 26M30 33L47 25"+L]],
-["Bent and twisted","Both at once",[49,20,"M30 44L44 26M38 20L52 32"+L]]]},
-{k:"Arms",q:"Where are the arms?",h:"Compare the hands and elbows with shoulder height.",o:[
-["Both low","Both below shoulders",[30,14,"M30 20V44"+L+"M30 26L20 42M30 26L40 42"]],
-["One high","One at or above shoulder",[30,14,"M30 20V44"+L+"M30 26L20 42M30 26L42 12"]],
-["Both high","Both at or above shoulders",[30,14,"M30 20V44"+L+"M30 26L18 12M30 26L42 12"]]]},
-{k:"Legs",q:"What are the legs doing?",h:"Choose the posture that carries the body weight.",o:[
-["Sitting","Weight on the seat",[22,14,"M22 20V44M22 44H44M44 44V70M14 48H36M16 48V72"]],
-["Standing","Both legs straight",[30,14,"M30 20V44"+L]],
-["One leg","Standing on one straight leg",[30,14,"M30 20V44M30 44V76M30 44L42 58L46 74"]],
-["Knees bent","Both knees bent",[30,14,"M30 20V42M30 42L42 58L30 74M30 42L46 58L36 74"]],
-["One bent leg","Weight on one bent leg",[30,14,"M30 20V44M30 44L42 60L30 76M30 44L26 70"]],
-["Kneeling","On one or both knees",[30,14,"M30 20V44M30 44V66H50"]],
-["Walking","Moving around",[30,14,"M30 20V44M30 44L20 76M30 44L42 60L44 76M30 26L22 40M30 26L38 40"]]]},
-{k:"Load",q:"How heavy is the load or force?",h:"The weight lifted or the force needed.",o:[
-["Light","10 kg or less",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 36h10v10h-10z"]],
-["Medium","10 to 20 kg",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 32h16v16h-16z"]],
-["Heavy","Over 20 kg",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 26h22v22h-22z"]]]}];
-const AC=[["Normal posture","No action is required."],["Slightly harmful","Corrective action is needed in the near future."],["Harmful","Corrective action should be taken as soon as possible."],["Severely harmful","Corrective action is required immediately."]];
+{k:"Rücken",q:"Wie ist der Rücken positioniert?",h:"Wählen Sie die passendste Option. 20° oder mehr gilt als gebeugt.",o:[
+["Gerade","Aufrecht, unter 20°",[30,14,"M30 20V44"+L+"M30 26L22 40"]],
+["Gebeugt","Vor- oder rückgebeugt, 20°+",[49,20,"M30 44L44 26"+L+"M44 28L50 44"]],
+["Verdreht","Verdreht oder seitlich gebeugt",[41,19,"M30 44L38 26M30 33L47 25"+L]],
+["Gebeugt und verdreht","Beides gleichzeitig",[49,20,"M30 44L44 26M38 20L52 32"+L]]]},
+{k:"Arme",q:"Wo befinden sich die Arme?",h:"Vergleichen Sie Hände und Ellbogen mit der Schulterhöhe.",o:[
+["Beide tief","Beide unter den Schultern",[30,14,"M30 20V44"+L+"M30 26L20 42M30 26L40 42"]],
+["Ein Arm hoch","Ein Arm auf oder über Schulterhöhe",[30,14,"M30 20V44"+L+"M30 26L20 42M30 26L42 12"]],
+["Beide hoch","Beide auf oder über Schulterhöhe",[30,14,"M30 20V44"+L+"M30 26L18 12M30 26L42 12"]]]},
+{k:"Beine",q:"Was machen die Beine?",h:"Wählen Sie die Haltung, die das Körpergewicht trägt.",o:[
+["Sitzend","Gewicht auf dem Gesäß",[22,14,"M22 20V44M22 44H44M44 44V70M14 48H36M16 48V72"]],
+["Stehend","Beide Beine gestreckt",[30,14,"M30 20V44"+L]],
+["Ein Bein","Stehend auf einem gestreckten Bein",[30,14,"M30 20V44M30 44V76M30 44L42 58L46 74"]],
+["Knie gebeugt","Beide Knie gebeugt",[30,14,"M30 20V42M30 42L42 58L30 74M30 42L46 58L36 74"]],
+["Ein Bein gebeugt","Gewicht auf einem gebeugten Bein",[30,14,"M30 20V44M30 44L42 60L30 76M30 44L26 70"]],
+["Kniend","Auf einem oder beiden Knien",[30,14,"M30 20V44M30 44V66H50"]],
+["Gehend","In Bewegung",[30,14,"M30 20V44M30 44L20 76M30 44L42 60L44 76M30 26L22 40M30 26L38 40"]]]},
+{k:"Last",q:"Wie schwer ist die Last oder Kraft?",h:"Das gehobene Gewicht oder die benötigte Kraft.",o:[
+["Leicht","10 kg oder weniger",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 36h10v10h-10z"]],
+["Mittel","10 bis 20 kg",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 32h16v16h-16z"]],
+["Schwer","Über 20 kg",[24,14,"M24 20V46M24 46L21 76M24 46L28 76M24 28L34 40","M32 26h22v22h-22z"]]]}];
+const AC=[["Normale Haltung","Keine Maßnahme erforderlich."],["Leicht schädlich","Korrekturmaßnahmen in naher Zukunft erforderlich."],["Schädlich","Korrekturmaßnahmen sollten baldmöglichst ergriffen werden."],["Stark schädlich","Korrekturmaßnahmen sind sofort erforderlich."]];
 const $=id=>document.getElementById(id),w=ms=>new Promise(r=>setTimeout(r,ms));
 let sel=[0,0,0,0],st=0,run=0,edit=false,img=0;
 const fig=f=>`<svg viewBox="0 0 60 80" aria-hidden="true"><circle cx="${f[0]}" cy="${f[1]}" r="6"/><path d="${f[2]}"/>${f[3]?`<path d="${f[3]}"/>`:""}</svg>`;
@@ -111,39 +111,39 @@ function render(){run++;const app=$("app");
  const s=S[st];
  let h=`<div class="prog">${[0,1,2,3,4].map(i=>`<i class="${i<=st?"on":""}"></i>`).join("")}</div>${strip()}<h2>${s.q}</h2><div class="mut">${s.h}</div><div class="grid">`;
  s.o.forEach((o,i)=>h+=`<button class="opt${sel[st]==i+1?" sel":""}" onclick="pick(${i+1},this)"><span class="num">${i+1}</span>${fig(o[2])}<b>${o[0]}</b><small>${o[1]}</small></button>`);
- h+=`</div><div class="row">${st>0&&!edit?`<button class="btn" onclick="st--;render()">Previous step</button>`:""}${edit?`<button class="btn" onclick="st=4;render()">Back to result</button>`:""}</div>`;
+ h+=`</div><div class="row">${st>0&&!edit?`<button class="btn" onclick="st--;render()">Vorheriger Schritt</button>`:""}${edit?`<button class="btn" onclick="st=4;render()">Zurück zum Ergebnis</button>`:""}</div>`;
  app.innerHTML=h;}
 function pick(i,el){sel[st]=i;el.classList.add("sel");$("strip").outerHTML=strip();setTimeout(()=>{st=edit?4:st+1;render()},300)}
 function go(i){edit=sel.every(Boolean);st=i;render()}
 function reset(){sel=[0,0,0,0];st=0;edit=false;render()}
 function result(){
  let h=`<div class="prog">${[0,1,2,3,4].map(()=>`<i class="on"></i>`).join("")}</div>${strip()}<div class="res"><div class="card"><div class="cap" id="cap"></div><div class="tbl" id="tbl">`;
- h+="<div></div>";for(let l=1;l<=7;l++)h+=`<div class="hd" id="lh${l}" style="grid-column:span 3">Legs ${l}</div>`;
+ h+="<div></div>";for(let l=1;l<=7;l++)h+=`<div class="hd" id="lh${l}" style="grid-column:span 3">Beine ${l}</div>`;
  h+="<div></div>";for(let l=1;l<=7;l++)for(let d=1;d<=3;d++)h+=`<div class="hd" id="dh${l}${d}">${d}</div>`;
  for(let b=1;b<=4;b++)for(let a=1;a<=3;a++){h+=`<div class="hd" id="rl${b}${a}">${b}·${a}</div>`;
   for(let c=0;c<21;c++){const v=T[""+b+a][c],l=(c/3|0)+1,d=c%3+1;h+=`<div class="k c${v}" data-r="${b}${a}" data-l="${l}" data-d="${d}">${v}</div>`}}
- h+=`</div><div class="mut" style="font-size:13px;margin-top:8px">Rows show back and arms, column groups show legs, and the three columns in each group show load.</div></div><div class="card out" id="out">${outHTML()}</div></div>`;
+ h+=`</div><div class="mut" style="font-size:13px;margin-top:8px">Die Zeilen zeigen Rücken und Arme, die Spaltengruppen zeigen die Beine, und die drei Spalten je Gruppe zeigen die Last.</div></div><div class="card out" id="out">${outHTML()}</div></div>`;
  $("app").innerHTML=h;play();}
 function outHTML(){const[b,a,l,d]=sel,v=ac(b,a,l,d),t=[];
- if(v>1){if(b!=1)t.push("Keep the back upright and bring the work to about waist height.");
-  if(b>2)t.push("Avoid twisting: turn with the feet and place materials in front of you.");
-  if(d>1)t.push("Reduce the load below 10 kg, use a lifting aid or share the lift.");
-  if(a>1)t.push("Keep the hands below shoulder height by lowering the work or raising the worker.");
-  if(l==6)t.push("Avoid kneeling: raise the work or use a knee support.");
-  if(l==4||l==5)t.push("Avoid standing with bent knees: use a stool or raise the workpiece.");
-  if(!t.length)t.push("Rotate tasks and add short breaks to cut the time spent in this posture.")}
- return `<div class="badge c${v}"><div class="n">AC${v}</div><p>${AC[v-1][0]}. ${AC[v-1][1]}</p></div><div class="code">OWAS code <b>${sel.join(" ")}</b></div>${t.length?`<b>What to change</b><ul>${t.slice(0,4).map(x=>`<li>${x}</li>`).join("")}</ul>`:""}<div class="row"><button class="btn" onclick="play()">Replay lookup</button><button class="btn p" onclick="reset()">New assessment</button></div>`}
+ if(v>1){if(b!=1)t.push("Rücken aufrecht halten und die Arbeit auf Hüfthöhe bringen.");
+  if(b>2)t.push("Verdrehen vermeiden: mit den Füßen mitdrehen und Material vor sich ablegen.");
+  if(d>1)t.push("Last unter 10 kg reduzieren, ein Hebehilfsmittel nutzen oder das Heben aufteilen.");
+  if(a>1)t.push("Hände unter Schulterhöhe halten, indem die Arbeit abgesenkt oder der Arbeitsplatz erhöht wird.");
+  if(l==6)t.push("Knien vermeiden: Arbeit erhöhen oder eine Knieauflage verwenden.");
+  if(l==4||l==5)t.push("Stehen mit gebeugten Knien vermeiden: einen Hocker nutzen oder das Werkstück erhöhen.");
+  if(!t.length)t.push("Aufgaben abwechseln und kurze Pausen einlegen, um die Zeit in dieser Haltung zu verkürzen.")}
+ return `<div class="badge c${v}"><div class="n">AC${v}</div><p>${AC[v-1][0]}. ${AC[v-1][1]}</p></div><div class="code">OWAS-Code <b>${sel.join(" ")}</b></div>${t.length?`<b>Was zu ändern ist</b><ul>${t.slice(0,4).map(x=>`<li>${x}</li>`).join("")}</ul>`:""}<div class="row"><button class="btn" onclick="play()">Nachschlagen wiederholen</button><button class="btn p" onclick="reset()">Neue Bewertung</button></div>`}
 async function play(){const id=++run,[b,a,l,d]=sel,r=""+b+a,v=ac(b,a,l,d),K=[...document.querySelectorAll(".k")],cap=t=>$("cap").textContent=t;
  K.forEach(k=>k.className="k c"+k.textContent);document.querySelectorAll(".hl").forEach(e=>e.classList.remove("hl"));$("out").classList.remove("on");
  await w(500);if(id!=run)return;
- cap(`Back ${b} and arms ${a} select this row`);K.forEach(k=>{if(k.dataset.r!=r)k.classList.add("off")});$("rl"+r).classList.add("hl");await w(1200);if(id!=run)return;
- cap(`Legs ${l} select these three columns`);K.forEach(k=>{if(k.dataset.r==r&&k.dataset.l!=l)k.classList.add("off")});$("lh"+l).classList.add("hl");await w(1200);if(id!=run)return;
- cap(`Load ${d} selects this cell`);K.forEach(k=>{if(k.dataset.r==r&&k.dataset.l==l){if(k.dataset.d!=d)k.classList.add("off");else k.classList.add("hit")}});$("dh"+l+d).classList.add("hl");await w(1100);if(id!=run)return;
- cap(`Result: action category ${v}`);$("out").classList.add("on");$("out").scrollIntoView({behavior:"smooth",block:"nearest"});}
-const strip=()=>`<div class="strip" id="strip">${S.map((q,i)=>{const x=sel[i],cur=st==i;return `<button class="${cur?"cur":""}" ${x||cur?"":"disabled"} onclick="go(${i})"><span>${q.k}</span><b>${x||"–"}</b><small>${x?q.o[x-1][0]:"not chosen"}</small></button>`}).join("")}</div>`;
-function imgErr(e){const d=document.createElement("div");d.className="mut";d.textContent=e.getAttribute("src")+" was not found. Put it in the same folder as this page.";e.replaceWith(d)}
+ cap(`Rücken ${b} und Arme ${a} wählen diese Zeile`);K.forEach(k=>{if(k.dataset.r!=r)k.classList.add("off")});$("rl"+r).classList.add("hl");await w(1200);if(id!=run)return;
+ cap(`Beine ${l} wählen diese drei Spalten`);K.forEach(k=>{if(k.dataset.r==r&&k.dataset.l!=l)k.classList.add("off")});$("lh"+l).classList.add("hl");await w(1200);if(id!=run)return;
+ cap(`Last ${d} wählt diese Zelle`);K.forEach(k=>{if(k.dataset.r==r&&k.dataset.l==l){if(k.dataset.d!=d)k.classList.add("off");else k.classList.add("hit")}});$("dh"+l+d).classList.add("hl");await w(1100);if(id!=run)return;
+ cap(`Ergebnis: Aktionskategorie ${v}`);$("out").classList.add("on");$("out").scrollIntoView({behavior:"smooth",block:"nearest"});}
+const strip=()=>`<div class="strip" id="strip">${S.map((q,i)=>{const x=sel[i],cur=st==i;return `<button class="${cur?"cur":""}" ${x||cur?"":"disabled"} onclick="go(${i})"><span>${q.k}</span><b>${x||"–"}</b><small>${x?q.o[x-1][0]:"nicht gewählt"}</small></button>`}).join("")}</div>`;
+function imgErr(e){const d=document.createElement("div");d.className="mut";d.textContent=e.getAttribute("src")+" wurde nicht gefunden. Bitte in denselben Ordner wie diese Seite legen.";e.replaceWith(d)}
 function trial(i){img=img==i?0:i;document.querySelectorAll(".tr").forEach((b,j)=>b.classList.toggle("sel",img==j+1));
- $("photo").innerHTML=img?`<div class="card"><div class="cap">Trial ${img}</div><a href="trial${img}.jpg" target="_blank"><img src="trial${img}.jpg" alt="Trial ${img} working posture" onerror="imgErr(this)"></a></div>`:"";
+ $("photo").innerHTML=img?`<div class="card"><div class="cap">Versuch ${img}</div><a href="trial${img}.jpg" target="_blank"><img src="trial${img}.jpg" alt="Arbeitshaltung Versuch ${img}" onerror="imgErr(this)"></a></div>`:"";
  if(img)$("photo").scrollIntoView({behavior:"smooth",block:"nearest"})}
 render();
 </script></body></html>
